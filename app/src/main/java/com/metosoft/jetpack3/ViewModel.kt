@@ -1,6 +1,7 @@
 package com.metosoft.jetpack3
 
 
+import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Environment
@@ -13,6 +14,10 @@ import com.example.jetpack3.readFileContent
 import kotlinx.coroutines.launch
 import java.io.File
 
+private operator fun <T> Comparable<T>.invoke(value: Any): Any {
+
+}
+
 class PltFileViewModel(application: Application) : AndroidViewModel(application) {
 
     var pltFiles by mutableStateOf<List<File>>(emptyList())
@@ -22,7 +27,7 @@ class PltFileViewModel(application: Application) : AndroidViewModel(application)
     private val context = getApplication<Application>().applicationContext
 
     fun checkAndLoadFiles() {
-        if (context.checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if (context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             loadPltFiles()
         } else {
             message = "SD karttan okuma izni verilmedi"
@@ -36,13 +41,13 @@ class PltFileViewModel(application: Application) : AndroidViewModel(application)
             if (files.isNotEmpty()) {readFileContent(
                 fileContents = files.map { readFileContent(it) }
                 message = fileContents.joinToString("\n") { it }
-            } else {
+                 else {
                 message = "SD kartta .plt dosyası bulunamadı"
             }
         }
     }
 
-    private fun listPltFiles(): List<File> {
+  fun listPltFiles(): List<File> {
         val pltFiles = mutableListOf<File>()
         val externalStorageDir = Environment.getExternalStorageDirectory()
         val files = externalStorageDir.listFiles()
