@@ -10,13 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.jetpack3.readFileContent
+import com.metosoft.jetpack3.MainActivity
 import kotlinx.coroutines.launch
 import java.io.File
 
-private operator fun <T> Comparable<T>.invoke(value: Any): Any {
 
-}
 
 class PltFileViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -25,6 +23,9 @@ class PltFileViewModel(application: Application) : AndroidViewModel(application)
     var fileContents by mutableStateOf<List<String>>(emptyList())
 
     private val context = getApplication<Application>().applicationContext
+    fun readFileContent(file: File): String {
+        return file.readText()
+    }
 
     fun checkAndLoadFiles() {
         if (context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
@@ -38,14 +39,16 @@ class PltFileViewModel(application: Application) : AndroidViewModel(application)
         viewModelScope.launch {
             val files = listPltFiles()
             pltFiles = files
-            if (files.isNotEmpty()) {readFileContent(
-                fileContents = files.map { readFileContent(it) }
+            if (files.isNotEmpty()) {
+                readFileContent(
+                    fileContents = files.map readFileContent ( it )
+                )
                 message = fileContents.joinToString("\n") { it }
-                 else {
+            } else {
                 message = "SD kartta .plt dosyası bulunamadı"
             }
         }
-    }
+
 
   fun listPltFiles(): List<File> {
         val pltFiles = mutableListOf<File>()
@@ -58,4 +61,4 @@ class PltFileViewModel(application: Application) : AndroidViewModel(application)
         }
         return pltFiles
     }
-}
+}}

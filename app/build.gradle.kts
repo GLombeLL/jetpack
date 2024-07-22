@@ -62,7 +62,9 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlin.stdlib)
     testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -71,5 +73,18 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation ("androidx.compose.material:material-icons-extended")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
+    //implementation (libs.jetpack3)
+    // implementation ("libs/jetpack3-1.0.0.jar")
 
 }
+/*repositories {
+    google()
+    mavenCentral()
+    maven {
+        //url = https://maven.jetpack3.com
+    }
+
+}*/
+
+
+
