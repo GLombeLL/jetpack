@@ -10,7 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.metosoft.jetpack3.MainActivity
+import com.metosoft.jetpack3.MainActivity.readFileContent
 import kotlinx.coroutines.launch
 import java.io.File
 
