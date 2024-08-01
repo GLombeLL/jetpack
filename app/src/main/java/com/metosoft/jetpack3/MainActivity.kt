@@ -1,137 +1,124 @@
 package com.metosoft.jetpack3
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Parcel
-import android.os.Parcelable
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModel
-import java.io.File
+import com.metosoft.jetpack3.ui.theme.Jetpack3Theme
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 class MainActivity : ComponentActivity() {
-
-    public val viewModel: PltFileViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MyApp(viewModel)
-
-            val permissionLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.RequestPermission()
-            ) { isGranted: Boolean ->
-                if (isGranted) {
-                    viewModel.loadPltFiles()
-                } else {
-                    "SD karttan okuma izni verilmedi"
-
+            Jetpack3Theme {
+                Surface(color = MaterialTheme.colors.background) {
+                    PltScreen(viewModel)
                 }
             }
-
-
-
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                viewModel.loadPltFiles()
-            } else {
-                permissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-        }
-    }
-}
-
-
-private class PltFileViewModel1 : ViewModel(){
-    fun loadPltFiles() {
-        TODO("Not yet implemented")
-    }
-    fun listPltFiles() {
-        TODO("Not yet implemented")
-    }
-    fun readFileContent(file: File): String {
-        return file.readText()
-    }
-    // MutableState veya LiveData kullanılabilir
-    val message = mutableStateOf("Initial Message")
-    val fileContents = mutableStateOf("Initial File Contents")
-
-    constructor(parcel: Parcel) : this() {
-    }
-
-    constructor()
-
-
-    companion object CREATOR : Parcelable.Creator<PltFileViewModel> {
-        override fun createFromParcel(parcel: Parcel): PltFileViewModel1 {
-            return PltFileViewModel1(parcel)
         }
 
-        override fun newArray(size: Int): Array<PltFileViewModel?> {
-            return arrayOfNulls(size)
-        }
+        // Load PLT files from assets directory
+        val pltFiles = listOf(
+            loadPltFileFromAssets("F1ATIH000.PLT"),
+            loadPltFileFromAssets("GRACE EVEN TANK TOP S3M3 43 KAT.PLT"),
+            loadPltFileFromAssets("HP-38614-38.PLT"),
+            loadPltFileFromAssets("HP-ARCHANA-36.PLT")
+
+        )
+        viewModel.setPltFiles(pltFiles)
     }
 
+    private fun loadPltFileFromAssets(fileName: String): String {
+        val content = StringBuilder()
+        val reader = BufferedReader(InputStreamReader(assets.open(fileName)))
+        var line: String?
+        while (reader.readLine().also { line = it } != null) {
+            content.append(line).append("\n")
+        }
+        reader.close()
+        return content.toString()
+    }
 }
 
 @Composable
-fun MyApp(viewModel: PltFileViewModel1) {
-    val message by remember { viewModel.message }
-    val fileContents by remember { viewModel.fileContents }
+fun PltScreen(viewModel: MainViewModel) {
+    val pltFiles by viewModel.pltFiles.collectAsState()
+    val selectedPltContent by viewModel.selectedPltContent.collectAsState()
 
+    val itemsPerPage = 4
+    var currentPage by remember { mutableStateOf(0) }
 
-    MaterialTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = message,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            fileContents.forEach {
-                Text(
-                    text = fileContents,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Left,
-                    modifier = Modifier.padding(8.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        val currentItems = pltFiles.chunked(itemsPerPage).getOrElse(currentPage) { emptyList() }
 
-
-
-
-
-
+        LazyColumn {
+            itemsIndexed(currentItems) { index, fileContent ->
+                PltItem(fileContent = fileContent, index = index + 1, onClick = {
+                    viewModel.selectPltFile(fileContent)
+                })
             }
+        }
 
-        }}}
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (currentPage > 0) {
+                Button(onClick = { currentPage-- }) {
+                    Text("Previous")
+                }
+            }
+            if ((currentPage + 1) * itemsPerPage < pltFiles.size) {
+                Button(onClick = { currentPage++ }) {
+                    Text("Next")
+                }
+            }
+        }
+
+        selectedPltContent?.let { content ->
+            AlertDialog(
+                onDismissRequest = { viewModel.selectPltFile(null) },
+                title = { Text("PLT File Content") },
+                text = { Text(content) },
+                confirmButton = {
+                    Button(onClick = { viewModel.selectPltFile(null) }) {
+                        Text("Close")
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun PltItem(fileContent: String, index: Int, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .background(color = Color.LightGray)
+            .padding(16.dp)
+    ) {
+        Button(onClick = onClick) {
+            Text(text = "Seç")
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = "Çizim: $index", style = MaterialTheme.typography.h6)
+    }
+}
